@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://example.com/cms"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             name="CmsService"
+             targetNamespace="http://example.com/cms">
+
+    <!-- Types (XSD schema) -->
+    <types>
+        <xsd:schema targetNamespace="http://example.com/cms">
+            <xsd:element name="GetOrderStatusRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="orderId" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="GetOrderStatusResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="status" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <!-- Messages -->
+    <message name="GetOrderStatusRequest">
+        <part name="parameters" element="tns:GetOrderStatusRequest"/>
+    </message>
+    <message name="GetOrderStatusResponse">
+        <part name="parameters" element="tns:GetOrderStatusResponse"/>
+    </message>
+
+    <!-- Port Type -->
+    <portType name="CmsPort">
+        <operation name="GetOrderStatus">
+            <input message="tns:GetOrderStatusRequest"/>
+            <output message="tns:GetOrderStatusResponse"/>
+        </operation>
+    </portType>
+
+    <!-- Binding -->
+    <binding name="CmsServiceSoapBinding" type="tns:CmsPort">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <operation name="GetOrderStatus">
+            <soap:operation soapAction="http://example.com/cms/GetOrderStatus"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+
+    <!-- Service -->
+    <service name="CmsService">
+        <documentation>Simple CMS SOAP Service</documentation>
+        <port name="CmsPort" binding="tns:CmsServiceSoapBinding">
+            <soap:address location="http://localhost:8081/cms"/>
+        </port>
+    </service>
+</definitions>
