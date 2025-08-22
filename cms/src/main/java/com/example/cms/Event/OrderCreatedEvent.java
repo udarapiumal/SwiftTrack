@@ -1,4 +1,4 @@
-package com.example.cms.DTO;
+package com.example.cms.Event;
 
 import java.io.Serializable;
 

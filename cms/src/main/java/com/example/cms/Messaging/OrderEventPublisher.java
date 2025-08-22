@@ -1,8 +1,8 @@
 package com.example.cms.Messaging;
 
 import com.example.cms.Config.RabbitConfig;
-import com.example.cms.DTO.OrderCanceledEvent;
-import com.example.cms.DTO.OrderCreatedEvent;
+import com.example.cms.Event.OrderCanceledEvent;
+import com.example.cms.Event.OrderCreatedEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 

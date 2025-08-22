@@ -1,6 +1,9 @@
 package com.example.cms.Config;
 
+import ch.qos.logback.classic.pattern.MessageConverter;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.support.converter.DefaultClassMapper;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,5 +33,18 @@ public class RabbitConfig {
     @Bean
     public Queue packageStatusUpdatedQueue() {
         return new Queue(PACKAGE_STATUS_UPDATED_QUEUE, true);
+    }
+    @Bean
+    public Jackson2JsonMessageConverter jacksonMessageConverter() {
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+        converter.setClassMapper(classMapper());
+        return converter;
+    }
+
+    @Bean
+    public DefaultClassMapper classMapper() {
+        DefaultClassMapper classMapper = new DefaultClassMapper();
+        classMapper.setTrustedPackages("com.example.cms.Event"); // your package
+        return classMapper;
     }
 }
