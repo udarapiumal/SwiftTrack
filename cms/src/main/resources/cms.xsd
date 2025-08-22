@@ -4,6 +4,7 @@
             xmlns="http://example.com/cms"
             elementFormDefault="qualified">
 
+    <!-- GetOrderStatus -->
     <xsd:element name="GetOrderStatusRequest">
         <xsd:complexType>
             <xsd:sequence>
@@ -16,6 +17,61 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="status" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <!-- SubmitOrder -->
+    <xsd:element name="SubmitOrderRequest">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="orderId" type="xsd:string"/>
+                <xsd:element name="clientId" type="xsd:string"/>
+                <xsd:element name="items" type="xsd:string"/> <!-- Simplified for demo -->
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="SubmitOrderResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="status" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <!-- CancelOrder -->
+    <xsd:element name="CancelOrderRequest">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="orderId" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="CancelOrderResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="status" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <!-- GetClientDetails -->
+    <xsd:element name="GetClientDetailsRequest">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="clientId" type="xsd:string"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="GetClientDetailsResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="clientName" type="xsd:string"/>
+                <xsd:element name="email" type="xsd:string"/>
+                <xsd:element name="phone" type="xsd:string"/>
             </xsd:sequence>
         </xsd:complexType>
     </xsd:element>

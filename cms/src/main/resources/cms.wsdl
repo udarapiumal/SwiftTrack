@@ -9,6 +9,8 @@
     <!-- Types (XSD schema) -->
     <types>
         <xsd:schema targetNamespace="http://example.com/cms">
+
+            <!-- GetOrderStatus -->
             <xsd:element name="GetOrderStatusRequest">
                 <xsd:complexType>
                     <xsd:sequence>
@@ -16,7 +18,6 @@
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
-
             <xsd:element name="GetOrderStatusResponse">
                 <xsd:complexType>
                     <xsd:sequence>
@@ -24,22 +25,92 @@
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:element>
+
+            <!-- SubmitOrder -->
+            <xsd:element name="SubmitOrderRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="orderId" type="xsd:string"/>
+                        <xsd:element name="clientId" type="xsd:string"/>
+                        <xsd:element name="items" type="xsd:string"/> <!-- Simplified for demo -->
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="SubmitOrderResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="status" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- CancelOrder -->
+            <xsd:element name="CancelOrderRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="orderId" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="CancelOrderResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="status" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <!-- GetClientDetails -->
+            <xsd:element name="GetClientDetailsRequest">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="clientId" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="GetClientDetailsResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="clientName" type="xsd:string"/>
+                        <xsd:element name="email" type="xsd:string"/>
+                        <xsd:element name="phone" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
         </xsd:schema>
     </types>
 
     <!-- Messages -->
-    <message name="GetOrderStatusRequest">
-        <part name="parameters" element="tns:GetOrderStatusRequest"/>
-    </message>
-    <message name="GetOrderStatusResponse">
-        <part name="parameters" element="tns:GetOrderStatusResponse"/>
-    </message>
+    <message name="GetOrderStatusRequest"><part name="parameters" element="tns:GetOrderStatusRequest"/></message>
+    <message name="GetOrderStatusResponse"><part name="parameters" element="tns:GetOrderStatusResponse"/></message>
+
+    <message name="SubmitOrderRequest"><part name="parameters" element="tns:SubmitOrderRequest"/></message>
+    <message name="SubmitOrderResponse"><part name="parameters" element="tns:SubmitOrderResponse"/></message>
+
+    <message name="CancelOrderRequest"><part name="parameters" element="tns:CancelOrderRequest"/></message>
+    <message name="CancelOrderResponse"><part name="parameters" element="tns:CancelOrderResponse"/></message>
+
+    <message name="GetClientDetailsRequest"><part name="parameters" element="tns:GetClientDetailsRequest"/></message>
+    <message name="GetClientDetailsResponse"><part name="parameters" element="tns:GetClientDetailsResponse"/></message>
 
     <!-- Port Type -->
     <portType name="CmsPort">
         <operation name="GetOrderStatus">
             <input message="tns:GetOrderStatusRequest"/>
             <output message="tns:GetOrderStatusResponse"/>
+        </operation>
+        <operation name="SubmitOrder">
+            <input message="tns:SubmitOrderRequest"/>
+            <output message="tns:SubmitOrderResponse"/>
+        </operation>
+        <operation name="CancelOrder">
+            <input message="tns:CancelOrderRequest"/>
+            <output message="tns:CancelOrderResponse"/>
+        </operation>
+        <operation name="GetClientDetails">
+            <input message="tns:GetClientDetailsRequest"/>
+            <output message="tns:GetClientDetailsResponse"/>
         </operation>
     </portType>
 
@@ -48,20 +119,32 @@
         <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
         <operation name="GetOrderStatus">
             <soap:operation soapAction="http://example.com/cms/GetOrderStatus"/>
-            <input>
-                <soap:body use="literal"/>
-            </input>
-            <output>
-                <soap:body use="literal"/>
-            </output>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="SubmitOrder">
+            <soap:operation soapAction="http://example.com/cms/SubmitOrder"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="CancelOrder">
+            <soap:operation soapAction="http://example.com/cms/CancelOrder"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="GetClientDetails">
+            <soap:operation soapAction="http://example.com/cms/GetClientDetails"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
         </operation>
     </binding>
 
     <!-- Service -->
     <service name="CmsService">
-        <documentation>Simple CMS SOAP Service</documentation>
+        <documentation>Complete CMS SOAP Service for SwiftTrack</documentation>
         <port name="CmsPort" binding="tns:CmsServiceSoapBinding">
             <soap:address location="http://localhost:8081/cms"/>
         </port>
     </service>
+
 </definitions>
