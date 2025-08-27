@@ -1,0 +1,72 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        # Route for CMS Service on port 8081
+        - id: cms-service-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/cms/**
+          filters:
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            - name: CircuitBreaker
+              args:
+                name: cmsCircuitBreaker
+                fallbackUri: forward:/fallback/cms
+
+        # Route for Service 2 on port 8082
+        - id: service-2-route
+          uri: http://localhost:8082
+          predicates:
+            - Path=/service2/**
+          filters:
+            - StripPrefix=1  # Remove /service2 prefix before forwarding
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            - name: CircuitBreaker
+              args:
+                name: service2CircuitBreaker
+                fallbackUri: forward:/fallback/service2
+
+        # Route for Service 3 on port 8083
+        - id: service-3-route
+          uri: http://localhost:8083
+          predicates:
+            - Path=/service3/**
+          filters:
+            - StripPrefix=1  # Remove /service3 prefix before forwarding
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            - name: CircuitBreaker
+              args:
+                name: service3CircuitBreaker
+                fallbackUri: forward:/fallback/service3
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+# Logging configuration
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
