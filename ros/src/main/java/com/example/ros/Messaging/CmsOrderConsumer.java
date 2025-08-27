@@ -7,6 +7,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 @Service
@@ -20,22 +21,32 @@ public class CmsOrderConsumer {
         this.objectMapper = new ObjectMapper();
     }
 
-    @RabbitListener(queues = "order.created")
-    public void handleOrderCreated(byte[] payload) throws Exception {
-        // Deserialize the payload
-        Map<String, Object> event = objectMapper.readValue(payload, Map.class);
+    // Use the rawRabbitListenerContainerFactory to avoid class resolution errors
+    @RabbitListener(
+            queues = "order.created",
+            containerFactory = "rawRabbitListenerContainerFactory" // <-- use raw container
+    )
+    public void handleOrderCreated(byte[] payload) {
+        try {
+            Map<String, Object> event = objectMapper.readValue(payload, Map.class);
+            System.out.println("✅ Received CMS OrderCreatedEvent: " + event);
 
-        System.out.println("✅ Received CMS OrderCreatedEvent: " + event);
+            RouteRequest request = new RouteRequest();
+            request.setOrderId((String) event.getOrDefault("orderId", "unknown"));
+            request.setDriverId("driver123");
 
-        // Map CMS event fields to RouteRequest
-        RouteRequest request = new RouteRequest();
-        request.setOrderId((String) event.get("orderId"));
-        request.setDriverId("driver123");
-        request.setAddresses(Arrays.asList(((String) event.get("items")).split(",")));
+            Object items = event.get("items");
+            if (items != null && !items.toString().isEmpty()) {
+                request.setAddresses(Arrays.asList(items.toString().split(",")));
+            }
 
-        // Call route optimization
-        routeService.optimizeRoute(request).thenAccept(response ->
-                System.out.println("Optimized route -> " + response.getRoute())
-        );
+            routeService.optimizeRoute(request)
+                    .thenAccept(response -> System.out.println("Optimized route -> " + response.getRoute()));
+
+        } catch (Exception e) {
+            System.err.println("❌ Failed to process OrderCreatedEvent: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+
 }
