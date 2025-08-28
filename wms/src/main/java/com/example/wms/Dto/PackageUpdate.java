@@ -1,7 +1,10 @@
 package com.example.wms.Dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDateTime;
 
+@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 public class PackageUpdate {
     private String packageId;
     private String orderId;
@@ -10,6 +13,7 @@ public class PackageUpdate {
 
     public PackageUpdate() {
     }
+
 
     public PackageUpdate(String packageId, String orderId, String status, LocalDateTime timestamp) {
         this.packageId = packageId;
