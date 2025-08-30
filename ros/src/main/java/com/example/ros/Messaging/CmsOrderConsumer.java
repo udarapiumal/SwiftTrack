@@ -28,24 +28,23 @@ public class CmsOrderConsumer {
     public void handleOrderCreated(byte[] payload) {
         try {
             Map<String, Object> event = objectMapper.readValue(payload, Map.class);
-            System.out.println("✅ Received CMS OrderCreatedEvent: " + event);
+            System.out.println("✅ ROS Received OrderCreatedEvent: " + event);
 
             String orderId = (String) event.getOrDefault("orderId", "unknown");
             Object items = event.get("items");
             List<String> itemList = items != null ? Arrays.asList(items.toString().split(",")) : List.of();
 
-            // Generate package IDs that match WMS format: orderId + "-PKG" + (index + 1)
+            // Generate package IDs that match WMS format: orderId + "-PKG" + (i + 1)
             List<String> packageIds = new ArrayList<>();
             for (int i = 0; i < itemList.size(); i++) {
                 packageIds.add(orderId + "-PKG" + (i + 1));
             }
 
             packageStatusService.registerPackages(orderId, packageIds);
-
-            System.out.println("📋 Registered packages for tracking: " + packageIds);
+            System.out.println("📋 ROS registered packages for tracking: " + packageIds);
 
         } catch (Exception e) {
-            System.err.println("❌ Failed to process OrderCreatedEvent: " + e.getMessage());
+            System.err.println("❌ ROS Failed to process OrderCreatedEvent: " + e.getMessage());
             e.printStackTrace();
         }
     }
