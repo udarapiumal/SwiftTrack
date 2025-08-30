@@ -8,12 +8,17 @@ spring:
   cloud:
     gateway:
       routes:
-        # Route for CMS Service on port 8081
-        - id: cms-service-route
+        # CMS Service on port 8081 - SOAP and HTTP support
+        - id: cms-soap-route
           uri: http://localhost:8081
           predicates:
-            - Path=/cms/**
+            - Path=/services/**
+            - Method=POST
           filters:
+            - name: PreserveHostHeader
+            - name: RemoveRequestHeader
+              args:
+                name: X-Forwarded-Host
             - name: Retry
               args:
                 retries: 3
@@ -23,13 +28,29 @@ spring:
                 name: cmsCircuitBreaker
                 fallbackUri: forward:/fallback/cms
 
-        # Route for Service 2 on port 8082
+        # CMS Service regular HTTP routes
+        - id: cms-http-route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/cms/**, /services/**
+            - Method=GET
+          filters:
+            - name: PreserveHostHeader
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+            - name: CircuitBreaker
+              args:
+                name: cmsCircuitBreaker
+                fallbackUri: forward:/fallback/cms
+
+        # Service 2 on port 8082
         - id: service-2-route
           uri: http://localhost:8082
           predicates:
-            - Path=/service2/**
+            - Path=/ros/**
           filters:
-            - StripPrefix=1  # Remove /service2 prefix before forwarding
             - name: Retry
               args:
                 retries: 3
@@ -39,13 +60,12 @@ spring:
                 name: service2CircuitBreaker
                 fallbackUri: forward:/fallback/service2
 
-        # Route for Service 3 on port 8083
+        # Service 3 on port 8083
         - id: service-3-route
           uri: http://localhost:8083
           predicates:
-            - Path=/service3/**
+            - Path=/wms/**
           filters:
-            - StripPrefix=1  # Remove /service3 prefix before forwarding
             - name: Retry
               args:
                 retries: 3
@@ -65,7 +85,7 @@ management:
     health:
       show-details: always
 
-# Logging configuration
+# Logging
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
