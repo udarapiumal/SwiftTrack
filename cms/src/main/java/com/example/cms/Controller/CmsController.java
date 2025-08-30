@@ -2,6 +2,8 @@ package com.example.cms.Controller;
 
 import com.example.cms.Service.CmsClientService;
 import com.example.cms.generated.GetClientDetailsResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,9 +17,15 @@ public class CmsController {
     }
 
     @GetMapping("/order/{orderId}")
-    public String getOrderStatus(@PathVariable String orderId){
-        return cmsClientService.getOrderStatus(orderId);
+    public ResponseEntity<String> getOrderStatus(@PathVariable String orderId){
+        String status = cmsClientService.getOrderStatus(orderId);
+        if(status == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Order not found: " + orderId);
+        }
+        return ResponseEntity.ok(status);
     }
+
 
     @PostMapping("/order/submit")
     public String submitOrder(@RequestParam String orderId,
