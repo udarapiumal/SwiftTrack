@@ -24,7 +24,7 @@ public class CmsOrderConsumer {
         this.packageStatusService = packageStatusService;
     }
 
-    @RabbitListener(queues = "order.created", containerFactory = "rawRabbitListenerContainerFactory")
+    @RabbitListener(queues = "order.created.ros", containerFactory = "rawRabbitListenerContainerFactory")
     public void handleOrderCreated(byte[] payload) {
         try {
             Map<String, Object> event = objectMapper.readValue(payload, Map.class);

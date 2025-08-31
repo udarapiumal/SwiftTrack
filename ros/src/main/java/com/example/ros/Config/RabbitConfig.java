@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
-    public static final String ORDER_CREATED_QUEUE = "order.created";
+    public static final String ORDER_CREATED_QUEUE = "order.created.ros";  // Change this
     public static final String ROUTE_UPDATED_QUEUE = "route.updated";
     public static final String PACKAGE_UPDATED_QUEUE = "package.updated";
 
