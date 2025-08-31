@@ -16,7 +16,12 @@ public class OrderEventPublisher {
 
     public void publishOrderCreated(String orderId, String clientId, String items) {
         OrderCreatedEvent event = new OrderCreatedEvent(orderId, clientId, items);
-        rabbitTemplate.convertAndSend(RabbitConfig.ORDER_CREATED_QUEUE, event);
+
+        // Publish to both service-specific queues
+        rabbitTemplate.convertAndSend("order.created.ros", event);
+        rabbitTemplate.convertAndSend("order.created.wms", event);
+
+        System.out.println("Published OrderCreatedEvent to both ROS and WMS queues");
     }
 
     public void publishOrderCanceled(String orderId) {
