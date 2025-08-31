@@ -42,7 +42,7 @@ public class WmsListener {
         }
     }
 
-    @RabbitListener(queues = RabbitConfig.PACKAGE_UPDATED_QUEUE, containerFactory = "rawRabbitListenerContainerFactory")
+    @RabbitListener(queues = "order.created.wms", containerFactory = "rawRabbitListenerContainerFactory")
     public void handlePackageUpdate(byte[] payload) {
         try {
             Map<String, Object> update = objectMapper.readValue(payload, Map.class);

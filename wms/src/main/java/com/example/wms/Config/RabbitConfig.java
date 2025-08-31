@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitConfig {
 
     public static final String PACKAGE_UPDATED_QUEUE = "package.updated";
-    public static final String ORDER_CREATED_QUEUE = "order.created";
+    public static final String ORDER_CREATED_QUEUE = "order.created.wms";  // Change this
 
     @Bean
     public Queue packageUpdatedQueue() {
