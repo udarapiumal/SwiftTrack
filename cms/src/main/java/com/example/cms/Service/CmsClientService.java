@@ -9,6 +9,7 @@ import com.example.cms.Repository.OrderRepository;
 import com.example.cms.generated.GetClientDetailsResponse;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,7 +18,6 @@ public class CmsClientService {
     private final CmsSoapClient cmsSoapClient;
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
-
     private final OrderEventPublisher orderEventPublisher;
 
     public CmsClientService(CmsSoapClient cmsSoapClient,
@@ -27,12 +27,35 @@ public class CmsClientService {
         this.cmsSoapClient = cmsSoapClient;
         this.orderRepository = orderRepository;
         this.clientRepository = clientRepository;
-        this.orderEventPublisher = orderEventPublisher;  // ✅ inject publisher
+        this.orderEventPublisher = orderEventPublisher;
+    }
+    public List<Order> getOrdersForClient(String clientId) {
+        return orderRepository.findByClient_ClientId(clientId);
+    }
+
+    // ✅ Create new client
+    public boolean createClient(String clientId, String clientName, String email, String phone) {
+        try {
+            if (clientRepository.existsById(clientId)) {
+                return true; // already exists, treat as success
+            }
+
+            Client newClient = new Client();
+            newClient.setClientId(clientId);
+            newClient.setClientName(clientName);
+            newClient.setEmail(email != null ? email : clientId + "@example.com");
+            newClient.setPhone(phone != null ? phone : "+94-700-000-000");
+
+            clientRepository.save(newClient);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Submit Order
     public String submitOrder(String orderId, String clientId, String items) {
-        // existing logic: save client/order to DB
         Client client = clientRepository.findById(clientId).orElseGet(() -> {
             Client newClient = new Client();
             newClient.setClientId(clientId);
@@ -49,12 +72,11 @@ public class CmsClientService {
         order.setStatus("SUBMITTED");
         orderRepository.save(order);
 
-        // ✅ publish event
+        // publish event
         orderEventPublisher.publishOrderCreated(orderId, clientId, items);
 
         return "Order " + orderId + " submitted successfully for client " + clientId;
     }
-
 
     // Cancel Order
     public String cancelOrder(String orderId) {
@@ -64,7 +86,7 @@ public class CmsClientService {
             order.setStatus("CANCELLED");
             orderRepository.save(order);
 
-            // ✅ publish cancel event
+            // publish cancel event
             orderEventPublisher.publishOrderCanceled(orderId);
 
             return "Order " + orderId + " has been canceled";
@@ -72,7 +94,6 @@ public class CmsClientService {
             return "Order " + orderId + " not found";
         }
     }
-
 
     // Get Order Status
     public String getOrderStatus(String orderId){
@@ -83,12 +104,12 @@ public class CmsClientService {
 
     // Get Client Details
     public GetClientDetailsResponse getClientDetails(String clientId){
-        Client client = clientRepository.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
         GetClientDetailsResponse response = new GetClientDetailsResponse();
         response.setClientName(client.getClientName());
         response.setEmail(client.getEmail());
         response.setPhone(client.getPhone());
         return response;
     }
-
 }

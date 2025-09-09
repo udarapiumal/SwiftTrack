@@ -4,6 +4,8 @@ import com.example.cms.Service.CmsClientService;
 import com.example.cms.generated.*;
 import jakarta.jws.WebService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.CrossOrigin;
+
 
 @WebService(
         endpointInterface = "com.example.cms.generated.CmsPort",

@@ -4,9 +4,11 @@ import com.example.cms.generated.*;
 import jakarta.xml.ws.BindingProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @Component
 public class CmsSoapClient {
 
