@@ -8,41 +8,41 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [items, setItems] = useState("");
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
 
   const clientId = localStorage.getItem("clientId");
   const token = localStorage.getItem("token");
   const userName = localStorage.getItem("userName") || "Customer";
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        if (!token || !clientId) {
-          setError("You are not logged in. Please login first.");
-          setLoading(false);
-          return;
-        }
-
-        const res = await axios.get(
-          `http://localhost:8081/cms/client/${clientId}/orders`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setOrders(res.data);
-      } catch (err) {
-        setError("Failed to fetch orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, [clientId, token]);
+
+  const fetchOrders = async () => {
+    try {
+      if (!token || !clientId) {
+        setError("You are not logged in. Please login first.");
+        setLoading(false);
+        return;
+      }
+
+      const res = await axios.get(
+        `http://localhost:8081/cms/client/${clientId}/orders`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOrders(res.data);
+    } catch (err) {
+      setError("Failed to fetch orders");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     try {
-      const orderId = Date.now(); // simple auto-generated ID
+      const orderId = Date.now();
       
-      // Properly formatted SOAP envelope
       const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                     xmlns:cms="http://example.com/cms">
@@ -56,32 +56,51 @@ export default function Dashboard() {
      </soapenv:Body>
   </soapenv:Envelope>`;
   
-      console.log("Sending SOAP request:", soapBody);
-  
-      const response = await axios.post("http://localhost:8080/services/CmsService", soapBody, {
+      await axios.post("http://localhost:8080/services/CmsService", soapBody, {
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
           "Accept": "text/xml, application/xml, application/soap+xml"
         },
       });
   
-      console.log("SOAP Response:", response.data);
-  
       setShowPopup(false);
       setItems("");
       alert("Order submitted successfully!");
       
-      // Refresh orders using the gateway
-      const res = await axios.get(
-        `http://localhost:8080/cms/client/${clientId}/orders`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setOrders(res.data);
+      // Refresh orders
+      await fetchOrders();
       
     } catch (err) {
       console.error("SOAP request failed:", err);
-      console.error("Response:", err.response?.data);
       alert("Failed to submit order: " + (err.response?.data || err.message));
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    setCancellingOrderId(orderId);
+    try {
+      const response = await axios.post(
+        `http://localhost:8081/cms/order/cancel?orderId=${orderId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.includes("successfully") || response.data.includes("canceled")) {
+        alert("Order cancelled successfully!");
+        // Refresh the orders list
+        await fetchOrders();
+      } else {
+        alert("Failed to cancel order: " + response.data);
+      }
+    } catch (err) {
+      console.error("Cancel order failed:", err);
+      alert("Failed to cancel order: " + (err.response?.data || err.message));
+    } finally {
+      setCancellingOrderId(null);
     }
   };
 
@@ -94,6 +113,7 @@ export default function Dashboard() {
 
   const getStatusBadgeClass = (status) => {
     switch (status.toLowerCase()) {
+      case "submitted": return "status-pending"; // Use same style as pending
       case "pending": return "status-pending";
       case "processing": return "status-processing";
       case "completed": return "status-completed";
@@ -102,6 +122,10 @@ export default function Dashboard() {
     }
   };
 
+  const canCancelOrder = (status) => {
+    const statusLower = status.toLowerCase();
+    return statusLower === "submitted" || statusLower === "pending" || statusLower === "processing";
+  };
   // Calculate statistics
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === "PENDING").length;
@@ -179,11 +203,12 @@ export default function Dashboard() {
                     <th>Items</th>
                     <th>Status</th>
                     
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((order) => (
-                    <tr key={order.orderId}>
+                    <tr key={order.orderId} className={cancellingOrderId === order.orderId ? "cancelling" : ""}>
                       <td>#{order.orderId}</td>
                       <td>{order.items}</td>
                       <td>
@@ -192,6 +217,15 @@ export default function Dashboard() {
                         </span>
                       </td>
                       
+                      <td>
+                        <button
+                          className={`action-btn cancel-btn ${!canCancelOrder(order.status) ? 'disabled' : ''}`}
+                          onClick={() => handleCancelOrder(order.orderId)}
+                          disabled={!canCancelOrder(order.status) || cancellingOrderId === order.orderId}
+                        >
+                          {cancellingOrderId === order.orderId ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
