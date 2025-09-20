@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [showPopup, setShowPopup] = useState(false);
   const [items, setItems] = useState("");
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const clientId = localStorage.getItem("clientId");
   const token = localStorage.getItem("token");
@@ -25,7 +26,7 @@ export default function Dashboard() {
         setLoading(false);
         return;
       }
-
+      
       const res = await axios.get(
         `http://localhost:8081/cms/client/${clientId}/orders`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -38,41 +39,62 @@ export default function Dashboard() {
     }
   };
 
+  // SUBMIT ORDER FUNCTION
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
+    
+    if (!items.trim()) {
+      alert("Please enter at least one item");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const orderId = Date.now();
+      // Create SOAP request XML
+      const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:cms="http://example.com/cms">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <cms:SubmitOrderRequest>
+      <orderId>${Date.now()}</orderId>
+      <clientId>${clientId}</clientId>
+      <items>${items.trim()}</items>
+    </cms:SubmitOrderRequest>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+      console.log("Sending SOAP request:", soapRequest);
+
+      // Send SOAP request to the endpoint you provided
+      const response = await axios.post(
+        "http://localhost:8080/services/CmsService",
+        soapRequest,
+        {
+          headers: {
+            "Content-Type": "text/xml; charset=utf-8",
+            "SOAPAction": "", // Add appropriate SOAPAction if needed by your service
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log("Order submitted successfully:", response.data);
       
-      const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
-  <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                    xmlns:cms="http://example.com/cms">
-     <soapenv:Header/>
-     <soapenv:Body>
-        <cms:SubmitOrderRequest>
-           <orderId>${orderId}</orderId>
-           <clientId>${clientId}</clientId>
-           <items>${items}</items>
-        </cms:SubmitOrderRequest>
-     </soapenv:Body>
-  </soapenv:Envelope>`;
-  
-      await axios.post("http://localhost:8080/services/CmsService", soapBody, {
-        headers: {
-          "Content-Type": "text/xml; charset=utf-8",
-          "Accept": "text/xml, application/xml, application/soap+xml"
-        },
-      });
-  
+      alert("Order submitted successfully!");
       setShowPopup(false);
       setItems("");
-      alert("Order submitted successfully!");
       
-      // Refresh orders
-      await fetchOrders();
+      // Refresh orders list after a short delay to allow backend processing
+      setTimeout(() => {
+        fetchOrders();
+      }, 1000);
       
     } catch (err) {
-      console.error("SOAP request failed:", err);
+      console.error("Submit order failed:", err);
       alert("Failed to submit order: " + (err.response?.data || err.message));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -91,7 +113,6 @@ export default function Dashboard() {
 
       if (response.data.includes("successfully") || response.data.includes("canceled")) {
         alert("Order cancelled successfully!");
-        // Refresh the orders list
         await fetchOrders();
       } else {
         alert("Failed to cancel order: " + response.data);
@@ -113,7 +134,7 @@ export default function Dashboard() {
 
   const getStatusBadgeClass = (status) => {
     switch (status.toLowerCase()) {
-      case "submitted": return "status-pending"; // Use same style as pending
+      case "submitted": return "status-pending";
       case "pending": return "status-pending";
       case "processing": return "status-processing";
       case "completed": return "status-completed";
@@ -126,6 +147,7 @@ export default function Dashboard() {
     const statusLower = status.toLowerCase();
     return statusLower === "submitted" || statusLower === "pending" || statusLower === "processing";
   };
+
   // Calculate statistics
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === "PENDING").length;
@@ -202,7 +224,6 @@ export default function Dashboard() {
                     <th>Order ID</th>
                     <th>Items</th>
                     <th>Status</th>
-                    
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -216,7 +237,6 @@ export default function Dashboard() {
                           {order.status}
                         </span>
                       </td>
-                      
                       <td>
                         <button
                           className={`action-btn cancel-btn ${!canCancelOrder(order.status) ? 'disabled' : ''}`}
@@ -248,12 +268,19 @@ export default function Dashboard() {
                 onChange={(e) => setItems(e.target.value)}
                 placeholder="e.g., Product A, Product B, Product C"
                 required
+                disabled={submitting}
               />
               <div className="popup-buttons">
-                <button type="button" onClick={() => setShowPopup(false)}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowPopup(false)}
+                  disabled={submitting}
+                >
                   Cancel
                 </button>
-                <button type="submit">Submit Order</button>
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit Order'}
+                </button>
               </div>
             </form>
           </div>
